@@ -1,1 +1,4 @@
 .env
+__pycache__/
+*.pyc
+.aish_history
