@@ -1,6 +1,21 @@
+import glob
 import signal
 import os
 import shlex
+
+
+def expand_glob(args):
+    expanded = []
+    for arg in args:
+        if "*" in arg or "?" in arg:
+            matches = glob.glob(arg)
+            if matches:
+                expanded.extend(matches)
+            else:
+                expanded.append(arg)
+        else:
+            expanded.append(arg)
+    return expanded
 
 
 def run_command(comm, commlist):
@@ -25,6 +40,7 @@ def run_command(comm, commlist):
 
                 signal.signal(signal.SIGPIPE, signal.SIG_DFL)
                 cmd_args = shlex.split(pipelist[i])
+                cmd_args = expand_glob(cmd_args)
                 try:
                     os.execvp(cmd_args[0], cmd_args)
                 except OSError:
@@ -53,6 +69,7 @@ def run_command(comm, commlist):
                     except Exception as e:
                         print(e)
                         os._exit(0)
+                commlist = expand_glob(commlist)
                 os.execvp(commlist[0], commlist)
             except OSError:
                 print(commlist[0], "is not a recognised command")
