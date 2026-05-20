@@ -9,6 +9,7 @@ from ui import GREEN, RESET, banner
 from ai_engine import ai_command
 from executor import run_command
 from core_cmds import handle_bye, handle_cd
+from completer import TabCompleter
 
 signal.signal(signal.SIGINT, signal.SIG_IGN)
 
@@ -23,6 +24,12 @@ except FileNotFoundError:
     pass
 
 atexit.register(readline.write_history_file, history_file)
+
+tab_completer = TabCompleter()
+
+readline.set_completer(tab_completer.complete)
+
+readline.parse_and_bind("tab: complete")
 
 
 def main():
@@ -50,8 +57,6 @@ def main():
                         break
 
                 if is_dangerous:
-                    #               print(GREEN + "AiSH Security: " + RESET + "Blocked potentially destructive command.")
-                    #                continue
                     print(GREEN + "AI Suggests: " + RESET + ai_suggest)
                     confirm = input("Run command? [y/n]: ")
                     while confirm == "":
