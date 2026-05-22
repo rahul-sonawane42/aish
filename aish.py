@@ -18,6 +18,8 @@ from ai_engine import ai_command
 from executor import run_command
 from core_cmds import handle_bye, handle_cd
 from completer import TabCompleter
+from bgprocess import start_auto_backup
+
 
 signal.signal(signal.SIGINT, signal.SIG_IGN)
 
@@ -41,11 +43,19 @@ readline.parse_and_bind("tab: complete")
 
 
 def main():
+
+    home = os.environ["HOME"]
+    config_path = os.path.join(home, ".aish_backup.conf")
+    backup_dest = os.path.join(home, ".aish_backups")
+
+    if start_auto_backup(config_path, backup_dest):
+        print(MUTED_BLUE + "Auto Backup ON" + RESET)
+    else:
+        print(ERROR_RED + "Auto Backup Error" + RESET)
     in_ai_session = False
 
     while True:
         cwd = os.getcwd()
-        home = os.environ["HOME"]
         cwd = cwd.replace(home, "~")
 
         if in_ai_session:
@@ -75,6 +85,28 @@ def main():
             in_ai_session = False
             print(MUTED_BLUE + "Returned to Native Shell." + RESET)
             continue
+
+        if comm == "@backup":
+            config_file = os.path.expanduser("~/.aish_backup.conf")
+            if not os.path.exists(config_file):
+                with open(config_file, "w") as f:
+                    f.write("""# ==========================================
+# AiSH Backup Configuration
+# ==========================================
+# Add the absolute paths of the directories you want to back up.
+# One directory path per line. 
+# Empty lines and lines starting with '#' will be ignored.
+# You can use '~' as a shortcut for your home directory.
+#
+# Examples:
+# ~/Documents/MCA_Project
+# /home/rahul/Downloads/important_pdfs
+# ~/.config/nvim
+# ==========================================
+
+""")
+            editor = os.environ.get("VISUAL") or os.environ.get("EDITOR") or "nano"
+            os.system(f"{editor} ~/.aish_backup.conf")
 
         if in_ai_session:
             try:
