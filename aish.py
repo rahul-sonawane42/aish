@@ -5,7 +5,15 @@ import atexit
 import signal
 import os
 import shlex
-from ui import GREEN, RESET, banner
+from ui import (
+    OFF_WHITE,
+    MUTED_BLUE,
+    ERROR_RED,
+    WARNING_YELLOW,
+    AI_PURPLE,
+    RESET,
+    banner,
+)
 from ai_engine import ai_command
 from executor import run_command
 from core_cmds import handle_bye, handle_cd
@@ -33,18 +41,44 @@ readline.parse_and_bind("tab: complete")
 
 
 def main():
+    in_ai_session = False
+
     while True:
         cwd = os.getcwd()
         home = os.environ["HOME"]
         cwd = cwd.replace(home, "~")
 
-        topline = "╭─ " + user + "@AiSH ─ [" + cwd + "]"
-        bottomline = "╰─❯ "
-        prompt = GREEN + topline + "\n" + RESET + GREEN + bottomline + RESET
+        if in_ai_session:
+            topline = f"╭─ {user}@AiSH ─ [{MUTED_BLUE}{cwd}{OFF_WHITE}] ─ [{AI_PURPLE} AI MODE{OFF_WHITE}]"
+            bottomline = f"╰─{AI_PURPLE}❯{RESET} "
+            prompt = OFF_WHITE + topline + "\n" + bottomline + RESET
+        else:
+            topline = f"╭─ {user}@AiSH ─ [{MUTED_BLUE}{cwd}{OFF_WHITE}]"
+            bottomline = f"╰─{MUTED_BLUE}❯{RESET} "
+            prompt = OFF_WHITE + topline + "\n" + bottomline + RESET
+
         comm = input(prompt)
-        if comm.startswith("@ai "):
+
+        if not comm:
+            continue
+
+        if comm == "@ai":
+            in_ai_session = True
+            print(
+                AI_PURPLE
+                + "Activated AI Translation Mode. Type @endai to return to native shell."
+                + RESET
+            )
+            continue
+
+        if comm == "@endai":
+            in_ai_session = False
+            print(MUTED_BLUE + "Returned to Native Shell." + RESET)
+            continue
+
+        if in_ai_session:
             try:
-                nl = comm[4:]
+                nl = comm
 
                 ai_suggest = ai_command(nl)
 
@@ -57,24 +91,51 @@ def main():
                         break
 
                 if is_dangerous:
-                    print(GREEN + "AI Suggests: " + RESET + ai_suggest)
-                    confirm = input("Run command? [y/n]: ")
+                    print(WARNING_YELLOW + "AI Suggests: " + RESET + ai_suggest)
+                    confirm = input(WARNING_YELLOW + "Run command? [y/n]: " + RESET)
                     while confirm == "":
                         confirm = input("Enter choice. [y/n]: ")
                     if confirm.lower() == "y":
                         comm = ai_suggest
                         commlist = shlex.split(comm)
                     else:
-                        print("Command Cancelled")
+                        print(ERROR_RED + "Command Cancelled" + RESET)
                         continue
                 else:
+                    if ai_suggest.startswith('echo "AiSH_ERROR'):
+                        error_message = ai_suggest.split('"')[1]
+                        print(ERROR_RED + error_message + RESET)
+                        continue
                     comm = ai_suggest
                     commlist = shlex.split(comm)
             except Exception as e:
-                print("AI Error: ", e)
-                os._exit(1)
+                error_msg = str(e).lower()
+                if (
+                    "429" in error_msg
+                    or "quota" in error_msg
+                    or "exhausted" in error_msg
+                    or "limit" in error_msg
+                ):
+                    print(
+                        ERROR_RED
+                        + "AI Quota Reached: The translation engine is temporarily out of tokens."
+                        + RESET
+                    )
+                else:
+                    print(ERROR_RED + f"AI Network Error: {e}" + RESET)
+
+                print(
+                    MUTED_BLUE
+                    + "Automatically returning to Native Shell Mode..."
+                    + RESET
+                )
+                in_ai_session = False
+                continue
         else:
             commlist = shlex.split(comm)
+
+            if commlist and commlist[0] == "ls" and "--color=auto" not in commlist:
+                commlist.insert(1, "--color=auto")
 
         if not commlist:
             continue
