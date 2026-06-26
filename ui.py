@@ -1,14 +1,15 @@
 RESET = "\033[0m"
 BOLD = "\033[1m"
 
-OFF_WHITE = "\033[38;5;253m"
-MUTED_BLUE = "\033[38;5;111m"
-ERROR_RED = "\033[38;5;203m"
-WARNING_YELLOW = "\033[38;5;221m"
-AI_PURPLE = "\033[38;5;183m"
+
+TEXT_MAIN = "\033[38;5;248m"
+PRIMARY = "\033[38;5;243m"
+ERROR = "\033[38;5;131m"
+WARNING = "\033[38;5;180m"
+ACCENT_AI = "\033[38;5;116m"
 
 banner = (
-    MUTED_BLUE
+    PRIMARY
     + BOLD
     + """
  █████╗ ██╗███████╗██╗  ██╗

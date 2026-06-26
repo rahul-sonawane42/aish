@@ -6,11 +6,11 @@ import signal
 import os
 import shlex
 from ui import (
-    OFF_WHITE,
-    MUTED_BLUE,
-    ERROR_RED,
-    WARNING_YELLOW,
-    AI_PURPLE,
+    TEXT_MAIN,
+    PRIMARY,
+    ERROR,
+    WARNING,
+    ACCENT_AI,
     RESET,
     banner,
 )
@@ -49,9 +49,9 @@ def main():
     backup_dest = os.path.join(home, ".aish_backups")
 
     if start_auto_backup(config_path, backup_dest):
-        print(MUTED_BLUE + "Auto Backup ON" + RESET)
+        print(ACCENT_AI + "Auto Backup ON" + RESET)
     else:
-        print(ERROR_RED + "Auto Backup Error" + RESET)
+        print(ERROR + "Auto Backup Error" + RESET)
     in_ai_session = False
 
     while True:
@@ -59,13 +59,13 @@ def main():
         cwd = cwd.replace(home, "~")
 
         if in_ai_session:
-            topline = f"╭─ {user}@AiSH ─ [{MUTED_BLUE}{cwd}{OFF_WHITE}] ─ [{AI_PURPLE} AI MODE{OFF_WHITE}]"
-            bottomline = f"╰─{AI_PURPLE}❯{RESET} "
-            prompt = OFF_WHITE + topline + "\n" + bottomline + RESET
+            topline = f"╭─ {user}@AiSH ─ [{PRIMARY}{cwd}{TEXT_MAIN}] ─ [{ACCENT_AI} AI MODE{TEXT_MAIN}]"
+            bottomline = f"╰─{ACCENT_AI}❯{RESET} "
+            prompt = TEXT_MAIN + topline + "\n" + bottomline + RESET
         else:
-            topline = f"╭─ {user}@AiSH ─ [{MUTED_BLUE}{cwd}{OFF_WHITE}]"
-            bottomline = f"╰─{MUTED_BLUE}❯{RESET} "
-            prompt = OFF_WHITE + topline + "\n" + bottomline + RESET
+            topline = f"╭─ {user}@AiSH ─ [{PRIMARY}{cwd}{TEXT_MAIN}]"
+            bottomline = f"╰─{PRIMARY}❯{RESET} "
+            prompt = TEXT_MAIN + topline + "\n" + bottomline + RESET
 
         comm = input(prompt)
 
@@ -75,7 +75,7 @@ def main():
         if comm == "@ai":
             in_ai_session = True
             print(
-                AI_PURPLE
+                ACCENT_AI
                 + "Activated AI Translation Mode. Type @endai to return to native shell."
                 + RESET
             )
@@ -83,7 +83,7 @@ def main():
 
         if comm == "@endai":
             in_ai_session = False
-            print(MUTED_BLUE + "Returned to Native Shell." + RESET)
+            print(ACCENT_AI + "Returned to Native Shell." + RESET)
             continue
 
         if comm == "@backup":
@@ -123,20 +123,20 @@ def main():
                         break
 
                 if is_dangerous:
-                    print(WARNING_YELLOW + "AI Suggests: " + RESET + ai_suggest)
-                    confirm = input(WARNING_YELLOW + "Run command? [y/n]: " + RESET)
+                    print(WARNING + "AI Suggests: " + RESET + ai_suggest)
+                    confirm = input(WARNING + "Run command? [y/n]: " + RESET)
                     while confirm == "":
                         confirm = input("Enter choice. [y/n]: ")
                     if confirm.lower() == "y":
                         comm = ai_suggest
                         commlist = shlex.split(comm)
                     else:
-                        print(ERROR_RED + "Command Cancelled" + RESET)
+                        print(ERROR + "Command Cancelled" + RESET)
                         continue
                 else:
                     if ai_suggest.startswith('echo "AiSH_ERROR'):
                         error_message = ai_suggest.split('"')[1]
-                        print(ERROR_RED + error_message + RESET)
+                        print(ERROR + error_message + RESET)
                         continue
                     comm = ai_suggest
                     commlist = shlex.split(comm)
@@ -149,17 +149,15 @@ def main():
                     or "limit" in error_msg
                 ):
                     print(
-                        ERROR_RED
+                        ERROR
                         + "AI Quota Reached: The translation engine is temporarily out of tokens."
                         + RESET
                     )
                 else:
-                    print(ERROR_RED + f"AI Network Error: {e}" + RESET)
+                    print(ERROR + f"AI Network Error: {e}" + RESET)
 
                 print(
-                    MUTED_BLUE
-                    + "Automatically returning to Native Shell Mode..."
-                    + RESET
+                    PRIMARY + "Automatically returning to Native Shell Mode..." + RESET
                 )
                 in_ai_session = False
                 continue
