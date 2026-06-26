@@ -1,0 +1,5 @@
+# AI Integration Layer
+google-generativeai>=0.4.0
+
+# Environment Variable Management (For secure API Key storage)
+python-dotenv>=1.0.0
