@@ -2,7 +2,6 @@
 
 import readline
 import atexit
-import signal
 import os
 import shlex
 from ui import (
@@ -20,9 +19,6 @@ from core_cmds import handle_bye, handle_cd
 from completer import TabCompleter
 from bgprocess import start_auto_backup
 
-
-signal.signal(signal.SIGINT, signal.SIG_IGN)
-
 user = os.environ.get("USER", "user")
 
 os.system("clear")
@@ -30,6 +26,7 @@ print(banner)
 history_file = os.path.join(os.environ.get("HOME", "~"), ".aish_history")
 try:
     readline.read_history_file(history_file)
+    readline.set_history_length(1000)
 except FileNotFoundError:
     pass
 
@@ -67,7 +64,15 @@ def main():
             bottomline = f"╰─{PRIMARY}❯{RESET} "
             prompt = TEXT_MAIN + topline + "\n" + bottomline + RESET
 
-        comm = input(prompt)
+        try:
+            comm = input(prompt)
+        except EOFError:
+            print()
+            handle_bye()
+
+        except KeyboardInterrupt:
+            print()
+            continue
 
         if not comm:
             continue
@@ -107,6 +112,7 @@ def main():
 """)
             editor = os.environ.get("VISUAL") or os.environ.get("EDITOR") or "nano"
             os.system(f"{editor} ~/.aish_backup.conf")
+            continue
 
         if in_ai_session:
             try:
@@ -138,8 +144,16 @@ def main():
                         error_message = ai_suggest.split('"')[1]
                         print(ERROR + error_message + RESET)
                         continue
+
+                    readline.add_history(ai_suggest)
+
                     comm = ai_suggest
                     commlist = shlex.split(comm)
+
+            except KeyboardInterrupt:
+                print(WARNING + "\nAI Translation Cancelled." + RESET)
+                continue
+
             except Exception as e:
                 error_msg = str(e).lower()
                 if (
@@ -174,7 +188,15 @@ def main():
         elif commlist[0] == "cd":
             handle_cd(commlist)
         else:
-            run_command(comm, commlist)
+            try:
+                run_command(comm, commlist)
+            except KeyboardInterrupt:
+                print("\n")
+
+        try:
+            readline.write_history_file(history_file)
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":
